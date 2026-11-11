@@ -1,0 +1,368 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ArugaLink | Benefit Management</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/html5-qrcode" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+
+  <section id="loginScreen" class="login-screen">
+    <form id="loginForm" class="login-card">
+      <div class="logo">A</div>
+      <h1>ArugaLink</h1>
+      <p>Senior Citizen & PWD Benefit Management</p>
+
+      <label for="username">Username</label>
+      <input id="username" autocomplete="username" required>
+
+      <label for="password">Password</label>
+      <input id="password" type="password" autocomplete="current-password" required>
+
+      <p id="loginError" class="error"></p>
+      <button class="primary-btn" type="submit">Login</button>
+    </form>
+  </section>
+
+  <div id="appScreen" class="app hidden">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="logo small">A</div>
+        <div><b>ArugaLink</b><small>OSCA / PWD Office</small></div>
+      </div>
+
+      <nav>
+        <button class="nav-btn active" data-page="dashboard">Dashboard</button>
+        <button class="nav-btn" data-page="beneficiaries">Beneficiaries</button>
+        <button class="nav-btn" data-page="purchases">Purchase Logging</button>
+        <button class="nav-btn" data-page="fraud">Fraud Monitoring</button>
+        <button class="nav-btn" data-page="analytics">Budget Analytics</button>
+      </nav>
+
+      <button id="logoutBtn" class="logout-btn">Logout</button>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h2 id="pageTitle">Dashboard</h2>
+          <p>Senior Citizen & PWD Benefit Allocation Tracker</p>
+        </div>
+        <span class="admin-label">● Administrator</span>
+      </header>
+
+      <!-- DASHBOARD -->
+      <section id="dashboard" class="page">
+        <h1>System Overview</h1>
+        <p class="muted">Monitor beneficiaries, purchase activity, and benefit usage.</p>
+
+        <div class="stats">
+          <article class="stat"><span>Beneficiaries</span><h2 id="beneficiaryCount">0</h2></article>
+          <article class="stat"><span>Purchase Records</span><h2 id="purchaseCount">0</h2></article>
+          <article class="stat"><span>Total Recorded Spending</span><h2 id="totalSpending">₱0.00</h2></article>
+          <article class="stat"><span>Unreviewed Flags</span><h2 id="flagCount">0</h2></article>
+        </div>
+
+        <div class="card">
+          <h3>Recent Purchases</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Receipt No.</th><th>Date</th><th>Beneficiary</th>
+                  <th>Store</th><th>Amount</th><th>Status</th><th>Receipt</th>
+                </tr>
+              </thead>
+              <tbody id="recentTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- BENEFICIARIES -->
+      <section id="beneficiaries" class="page hidden">
+        <h1>Beneficiary Management</h1>
+        <p class="muted">Register and maintain Senior Citizen and PWD records.</p>
+
+        <div class="card">
+          <h3 id="beneficiaryFormTitle">Register Beneficiary</h3>
+
+          <form id="beneficiaryForm">
+            <input type="hidden" id="beneficiaryEditId">
+
+            <div class="form-grid">
+              <div>
+                <label for="beneficiaryId">Beneficiary ID / QR ID</label>
+                <input id="beneficiaryId" placeholder="ARUGA-001" required>
+              </div>
+
+              <div>
+                <label for="beneficiaryName">Full Name</label>
+                <input id="beneficiaryName" required>
+              </div>
+
+              <div>
+                <label for="beneficiaryCategory">Category</label>
+                <select id="beneficiaryCategory" required>
+                  <option value="">Select category</option>
+                  <option>Senior Citizen</option>
+                  <option>PWD</option>
+                </select>
+              </div>
+
+              <div>
+                <label for="beneficiaryContact">Contact Number</label>
+                <input id="beneficiaryContact" placeholder="09XXXXXXXXX">
+              </div>
+
+              <div>
+                <label for="medicineCap">Weekly Medicine Cap (₱)</label>
+                <input id="medicineCap" type="number" min="0" step=".01" value="1500" required>
+              </div>
+
+              <div>
+                <label for="groceryCap">Weekly Grocery Cap (₱)</label>
+                <input id="groceryCap" type="number" min="0" step=".01" value="2500" required>
+              </div>
+            </div>
+
+            <p id="beneficiaryMessage" class="message" aria-live="polite"></p>
+            <button id="beneficiarySaveBtn" class="primary-btn">Add Beneficiary</button>
+            <button type="button" id="cancelBeneficiaryEdit" class="light-btn hidden">Cancel</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="section-heading">
+            <h3>Registered Beneficiaries</h3>
+            <input id="beneficiaryFilter" class="filter" placeholder="Search ID or name">
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th><th>Name</th><th>Category</th><th>Contact</th>
+                  <th>Medicine Cap</th><th>Grocery Cap</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="beneficiaryTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- PURCHASE LOGGING -->
+      <section id="purchases" class="page hidden">
+        <h1>Purchase Logging</h1>
+        <p class="muted">Verify a beneficiary, record a purchase, and issue a printable receipt.</p>
+
+        <div class="card">
+          <h3 id="purchaseFormTitle">Record New Purchase</h3>
+
+          <form id="purchaseForm">
+            <input type="hidden" id="purchaseEditId">
+
+            <div class="form-grid">
+              <div class="full-width">
+                <label for="purchaseBeneficiary">Beneficiary</label>
+
+                <div class="scan-row">
+                  <select id="purchaseBeneficiary" required>
+                    <option value="">Select beneficiary</option>
+                  </select>
+                  <button type="button" id="startQrBtn" class="light-btn">Scan Beneficiary QR</button>
+                </div>
+
+                <div id="qrReader" class="qr-reader hidden"></div>
+                <p id="qrMessage" class="hint" aria-live="polite">
+                  Scan a beneficiary QR code containing their ID, such as ARUGA-001.
+                </p>
+
+                <div class="face-check-panel">
+                  <div class="face-check-heading">
+                    <div>
+                      <b>Beneficiary face verification</b>
+                      <p class="hint">
+                        Use the front camera so staff can visually compare the live person
+                        with their official beneficiary ID/photo.
+                      </p>
+                    </div>
+                    <button type="button" id="startFaceBtn" class="light-btn">Start Face Check</button>
+                  </div>
+
+                  <video id="faceVideo" class="face-video hidden" autoplay muted playsinline></video>
+
+                  <label class="face-confirm">
+                    <input type="checkbox" id="faceConfirmed" disabled>
+                    I confirm that I visually checked the person against their official beneficiary ID/photo.
+                  </label>
+
+                  <p id="faceMessage" class="hint" aria-live="polite">
+                    Face verification is required before saving a purchase.
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <label for="partnerStore">Partner Store / Pharmacy</label>
+                <input id="partnerStore" placeholder="ABC Pharmacy" required>
+              </div>
+
+              <div>
+                <label for="purchaseCategory">Purchase Category</label>
+                <select id="purchaseCategory" required>
+                  <option value="">Select category</option>
+                  <option>Medicine</option>
+                  <option>Grocery</option>
+                </select>
+              </div>
+
+              <div>
+                <label for="purchaseAmount">Purchase Amount (₱)</label>
+                <input id="purchaseAmount" type="number" min=".01" step=".01" required>
+              </div>
+
+              <div>
+                <label for="voucherCode">Voucher Code</label>
+                <input id="voucherCode" placeholder="MED-2026-001" required>
+              </div>
+
+              <div>
+                <label for="purchaseDate">Transaction Date</label>
+                <input id="purchaseDate" type="date" required>
+              </div>
+
+              <div class="full-width">
+                <label for="purchaseNotes">Items / Purchase Details (optional)</label>
+                <input id="purchaseNotes" placeholder="e.g. maintenance medicine / grocery items">
+              </div>
+            </div>
+
+            <p class="hint">
+              Voucher codes must be unique. A flagged transaction is held for staff review;
+              the flag does not prove fraud.
+            </p>
+
+            <p id="purchaseMessage" class="message" aria-live="polite"></p>
+            <button id="purchaseSaveBtn" class="primary-btn">Record Purchase & Create Receipt</button>
+            <button type="button" id="cancelPurchaseEdit" class="light-btn hidden">Cancel</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="section-heading">
+            <h3>Purchase History</h3>
+            <input id="purchaseFilter" class="filter" placeholder="Search beneficiary, receipt or voucher">
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Receipt No.</th><th>Date</th><th>Beneficiary</th><th>Store</th>
+                  <th>Category</th><th>Amount</th><th>Voucher</th><th>Status</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="purchaseTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- FRAUD MONITORING -->
+      <section id="fraud" class="page hidden">
+        <h1>Fraud Monitoring</h1>
+        <p class="muted">Review possible duplicate or unusual transactions.</p>
+
+        <div class="card">
+          <h3>Duplicate & Suspicious Purchase Attempts</h3>
+          <p class="hint">
+            Blocked duplicate attempts are listed here even though they were not saved as purchases.
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Attempt Time</th><th>Beneficiary ID / Name</th><th>Store</th>
+                  <th>Category</th><th>Amount</th><th>Voucher</th>
+                  <th>Reason / Error</th><th>Status</th><th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="fraudTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ANALYTICS -->
+      <section id="analytics" class="page hidden">
+        <h1>Subsidy Budget Analytics</h1>
+        <p class="muted">A simple estimate based on recorded transactions.</p>
+
+        <div class="stats">
+          <article class="stat"><span>Total Spending</span><h2 id="analyticsTotal">₱0.00</h2></article>
+          <article class="stat"><span>Average of Last 3 Calendar Months</span><h2 id="monthlyAverage">₱0.00</h2></article>
+          <article class="stat"><span>Next Month Estimate</span><h2 id="forecastAmount">₱0.00</h2></article>
+        </div>
+
+        <div class="card">
+          <h3>Monthly Spending</h3>
+          <div id="forecastBars" class="forecast-bars"></div>
+          <p class="hint">This is a basic average, not an AI prediction or an official government budget.</p>
+        </div>
+      </section>
+
+      <footer>ArugaLink © 2026 | Demonstration Prototype</footer>
+    </main>
+  </div>
+
+  <!-- RECEIPT MODAL -->
+  <div id="receiptModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="receiptHeading">
+    <div class="modal-panel">
+      <div class="modal-actions no-print">
+        <button id="printReceiptBtn" class="primary-btn">Print Receipt</button>
+        <button id="closeReceiptBtn" class="light-btn">Close</button>
+      </div>
+
+      <article id="receiptPaper" class="receipt-paper">
+        <div class="receipt-header">
+          <div class="receipt-logo">A</div>
+          <h2 id="receiptHeading">ARUGALINK</h2>
+          <p>Senior Citizen & PWD Benefit Purchase Receipt</p>
+          <p class="receipt-demo">DEMO RECEIPT — NOT AN OFFICIAL GOVERNMENT VOUCHER</p>
+        </div>
+        <hr>
+        <div id="receiptContent"></div>
+        <hr>
+        <p class="receipt-thanks">Thank you. Please keep this receipt for your records.</p>
+        <p class="receipt-footer">Generated by ArugaLink Benefit Allocation Tracker</p>
+      </article>
+    </div>
+  </div>
+
+  <!-- BENEFICIARY QR MODAL -->
+  <div id="beneficiaryQrModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="beneficiaryQrTitle">
+    <div class="modal-panel qr-print-panel">
+      <div class="modal-actions no-print">
+        <button id="printBeneficiaryQrBtn" class="primary-btn">Print QR Code</button>
+        <button id="closeBeneficiaryQrBtn" class="light-btn">Close</button>
+      </div>
+
+      <section class="beneficiary-qr-paper">
+        <h2 id="beneficiaryQrTitle">Beneficiary QR Code</h2>
+        <p id="beneficiaryQrName"></p>
+        <div id="beneficiaryQrCanvas"></div>
+        <p>Scan this code in ArugaLink Purchase Logging.</p>
+      </section>
+    </div>
+  </div>
+
+</body>
+</html>
