@@ -1,0 +1,21 @@
+{
+  "name": "arugalink",
+  "version": "1.0.0",
+  "description": "ArugaLink - Senior Citizen & PWD benefit management (Node + SQLite backend)",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test test/api.test.js"
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "license": "UNLICENSED",
+  "private": true,
+  "directories": {
+    "test": "test"
+  },
+  "keywords": [],
+  "author": "",
+  "type": "commonjs"
+}
